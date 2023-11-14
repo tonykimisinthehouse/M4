@@ -40,7 +40,7 @@ def time_series_query_for_visualization(from_time: int, to_time: int, chart_widt
     SELECT * FROM Q WHERE (SELECT c FROM QC) <= {4 * chart_width} UNION
     SELECT * FROM (
     {sql_m4_aggregation("Q", time_column, value_column, from_time, to_time, chart_width)}
-    ) AS QD wHERE (SELECT c FROM QC) > {4 * chart_width}
+    ) AS QD wHERE (SELECT c FROM QC) > {4 * chart_width} ORDER BY {time_column}
     """
     print(sql_query)
     cur.execute(sql_query)
