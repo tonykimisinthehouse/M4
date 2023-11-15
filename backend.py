@@ -4,7 +4,9 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 import psycopg2
-from configs import pg_connection_dict
+from configs import pg_connection_dict, SUPABASE_URL, SUPABASE_KEY
+from supabase import create_client, Client
+
 from sql_generators import *
 
 from skimage.metrics import structural_similarity
@@ -107,3 +109,44 @@ async def compute_dssim(image_1: UploadFile = File(...), image_2: UploadFile = F
         "dssim": dssim,
         "ssim": ssim
     }
+
+from pydantic import BaseModel
+
+
+class VisualizationQualityRecord(BaseModel):
+    num_of_underlying_rows: int
+    dssim: float
+    ssim: float
+
+
+@app.post("/record_visualization_quality")
+async def record_visualization_quality(num_of_underlying_rows: int, dssim: float, ssim: float):
+    url: str = SUPABASE_URL
+    key: str = SUPABASE_KEY
+    supabase: Client = create_client(url, key)
+    data = supabase.table("visualization_quality")\
+        .insert(
+        {"num_of_underlying_rows" :  num_of_underlying_rows,
+         "dssim": dssim,
+         "ssim": ssim
+         }
+    ).execute()
+
+
+@app.post("/record_query_performance")
+async def record_query_performance(num_of_underlying_rows: int,
+                                   base_execution_time: float, base_total_time: float,
+                                   m4_execution_time: float, m4_total_time: float,
+                                   ):
+    url: str = SUPABASE_URL
+    key: str = SUPABASE_KEY
+    supabase: Client = create_client(url, key)
+    data = supabase.table("query_performance")\
+        .insert(
+        {"num_of_underlying_rows":  num_of_underlying_rows,
+         "base_query_execution_time": base_execution_time,
+         "base_total_time": base_total_time,
+         "m4_query_execution_time": m4_execution_time,
+         "m4_total_time": m4_total_time,
+         }
+    ).execute()
